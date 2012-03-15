@@ -25,6 +25,16 @@ public class ProcTest {
 		assertThat(list.get(0), is("hoge"));
 	}
 
+	@Test(expected=RetryException.class)
+	public void リトライ回数分試行しても処理ができなかったときはRetryException() throws Throwable{
+		Proc.retry(3,new Runnable() {
+			@Override
+			public void run() throws Throwable {
+				throw new IOException();
+			}
+		});
+	}
+
 	@Test
 	public void エラーが発生しても処理が普通に行える_非チェック例外() throws Throwable{
 		final List<String> list = new ArrayList<String>();
@@ -79,20 +89,24 @@ public class ProcTest {
 		assertThat(list.get(0), is("hoge"));
 	}
 
-	@Test(expected=IOException.class)
+	@Test
 	public void 指定したエラー以外の時は処理が止まる() throws Throwable{
 		final List<String> list = new ArrayList<String>();
-		Proc.retry(3,new Runnable() {
-			int i = 0;
-			@Override
-			public void run() throws Throwable {
-				if(i < 2){
-					i++;
-					throw new IOException();
+		try {
+			Proc.retry(3,new Runnable() {
+				int i = 0;
+				@Override
+				public void run() throws Throwable {
+					if(i < 2){
+						i++;
+						throw new IOException();
+					}
+					list.add("hoge");
 				}
-				list.add("hoge");
-			}
-		},RuntimeException.class);
+			},RuntimeException.class);
+		} catch (Throwable t) {
+			assertThat(t.getCause(), is(IOException.class));
+		}
 	}
 
 	@Test
