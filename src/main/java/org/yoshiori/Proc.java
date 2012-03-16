@@ -46,6 +46,7 @@ public class Proc {
 					try {
 						Thread.sleep(sleeptime);
 					} catch (InterruptedException e1) {
+						throw new RetryException(e1);
 					}
 					continue;
 				}
